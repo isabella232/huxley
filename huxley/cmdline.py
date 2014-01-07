@@ -66,6 +66,7 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             local=LOCAL_WEBDRIVER_URL,
             remote=REMOTE_WEBDRIVER_URL,
             record=True,
+            save_diff=save_diff,
             screensize=screensize
         )
     else:
