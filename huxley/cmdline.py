@@ -34,7 +34,7 @@ LOCAL_WEBDRIVER_URL = os.environ.get('HUXLEY_WEBDRIVER_LOCAL', 'http://localhost
 REMOTE_WEBDRIVER_URL = os.environ.get('HUXLEY_WEBDRIVER_REMOTE', 'http://localhost:4444/wd/hub')
 DEFAULTS = json.loads(os.environ.get('HUXLEY_DEFAULTS', 'null'))
 
-def run_test(record, playback_only, save_diff, new_screenshots, file, config, testname):
+def run_test(record, playback_only, save_diff, new_screenshots, file, config, testname, browser):
     print '[' + testname + '] Running test:', testname
     test_config = dict(config.items(testname))
     url = config.get(testname, 'url')
@@ -67,7 +67,8 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             remote=REMOTE_WEBDRIVER_URL,
             record=True,
             save_diff=save_diff,
-            screensize=screensize
+            screensize=screensize,
+            browser=browser
         )
     else:
         r = huxleymain(
@@ -79,7 +80,8 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             sleepfactor=sleepfactor,
             autorerecord=not playback_only,
             save_diff=save_diff,
-            screensize=screensize
+            screensize=screensize,
+            browser=browser
         )
     print
     if r != 0:
@@ -122,6 +124,12 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
         'Get the current version',
         'flag',
         'v'
+    ),
+    browser=plac.Annotation(
+        'Specify a browser (firefox, chrome, ie, opera)',
+        'option',
+        'b',
+        str
     )
 )
 def _main(
@@ -131,7 +139,8 @@ def _main(
     playback_only=False,
     concurrency=1,
     save_diff=False,
-    version=False
+    version=False,
+    browser='firefox'
 ):
     if version:
         print 'Huxley ' + __version__
@@ -159,7 +168,7 @@ def _main(
         for testname in config.sections():
             if names and (testname not in names):
                 continue
-            pool.enqueue(run_test, record, playback_only, save_diff, new_screenshots, file, config, testname)
+            pool.enqueue(run_test, record, playback_only, save_diff, new_screenshots, file, config, testname, browser)
 
     pool.work(concurrency)
     if new_screenshots.value:
