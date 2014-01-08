@@ -85,7 +85,7 @@ class TestRun(object):
         run._playback(sleepfactor)
 
     def _playback(self, sleepfactor):
-        self.d.set_window_size(*self.test.screen_size)
+        self.set_window_size(*self.test.screen_size)
 
         if self.d.name == 'chrome':
             # Chrome focuses on its location field when you navigate after a screenshot, so to be
@@ -104,6 +104,11 @@ class TestRun(object):
             step.execute(self)
             last_offset_time = step.offset_time
 
+    def set_window_size(self, width, height):
+        self.d.set_window_size(width, height)
+        dims = self.d.execute_script('return [window.innerWidth, window.innerHeight];')
+        self.d.set_window_size(width + (width - dims[0]), height + (height - dims[1]))
+
     @classmethod
     def record(cls, d, remote_d, url, screen_size, path, diffcolor, sleepfactor, save_diff):
         print 'Begin record'
@@ -113,7 +118,7 @@ class TestRun(object):
             pass
         test = Test(screen_size)
         run = TestRun(test, path, url, d, TestRunModes.RECORD, diffcolor, save_diff)
-        d.set_window_size(*screen_size)
+        run.set_window_size(*screen_size)
         navigate(d, url)
         start_time = d.execute_script('return +new Date();')
         d.execute_script('''
