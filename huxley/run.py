@@ -86,6 +86,15 @@ class TestRun(object):
 
     def _playback(self, sleepfactor):
         self.d.set_window_size(*self.test.screen_size)
+
+        if self.d.name == 'chrome':
+            # Chrome focuses on its location field when you navigate after a screenshot, so to be
+            # consistent across runs we force a screenshot up front before anything gets underway.
+            # Otherwise focus / selection rendering will differ across runs.
+            self.d.get('about:version')
+            self.d.save_screenshot('tmp-chrome-screenshot.png')
+            os.unlink('tmp-chrome-screenshot.png')
+
         navigate(self.d, self.url)
         last_offset_time = 0
         for step in self.test.steps:
