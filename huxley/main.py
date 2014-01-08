@@ -28,14 +28,16 @@ DRIVERS = {
     'firefox': webdriver.Firefox,
     'chrome': webdriver.Chrome,
     'ie': webdriver.Ie,
-    'opera': webdriver.Opera
+    'opera': webdriver.Opera,
+    'opera': webdriver.PhantomJS,
 }
 
 CAPABILITIES = {
     'firefox': webdriver.DesiredCapabilities.FIREFOX,
     'chrome': webdriver.DesiredCapabilities.CHROME,
     'ie': webdriver.DesiredCapabilities.INTERNETEXPLORER,
-    'opera': webdriver.DesiredCapabilities.OPERA
+    'opera': webdriver.DesiredCapabilities.OPERA,
+    'phantomjs': webdriver.DesiredCapabilities.PHANTOMJS,
 }
 
 
@@ -72,6 +74,8 @@ def main(
         autorerecord=False,
         save_diff=False):
 
+    local_browser = browser if browser != 'phantomjs' else 'chrome'
+
     if postdata:
         if postdata == '-':
             postdata = sys.stdin.read()
@@ -82,7 +86,7 @@ def main(
         if remote:
             d = webdriver.Remote(remote, CAPABILITIES[browser])
         else:
-            d = DRIVERS[browser]()
+            d = DRIVERS[local_browser]()
         screensize = tuple(int(x) for x in screensize.split('x'))
     except KeyError:
         raise ValueError(
@@ -100,7 +104,7 @@ def main(
     with contextlib.closing(d):
         if record:
             if local:
-                local_d = webdriver.Remote(local, CAPABILITIES[browser])
+                local_d = webdriver.Remote(local, CAPABILITIES[local_browser])
             else:
                 local_d = d
             with contextlib.closing(local_d):

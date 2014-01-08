@@ -19,6 +19,7 @@ from huxley.consts import TestRunModes
 from huxley.errors import TestError
 from huxley.images import images_identical, image_diff
 
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 
 # Since we want consistent focus screenshots we steal focus
@@ -43,13 +44,18 @@ class ClickTestStep(TestStep):
 
     def execute(self, run):
         print '  Clicking', self.pos
-        # Work around multiple bugs in WebDriver's implementation of click()
-        run.d.execute_script(
-            'document.elementFromPoint(%d, %d).click();' % (self.pos[0], self.pos[1])
-        )
-        run.d.execute_script(
-            'document.elementFromPoint(%d, %d).focus();' % (self.pos[0], self.pos[1])
-        )
+        if run.d.name == 'phantomjs':
+            # PhantomJS 1.x does not support 'click()' so use Selenium
+            body = run.d.find_element_by_tag_name('body')
+            ActionChains(run.d).move_to_element_with_offset(body, self.pos[0], self.pos[1]).click().perform()
+        else:
+            # Work around multiple bugs in WebDriver's implementation of click()
+            run.d.execute_script(
+                'document.elementFromPoint(%d, %d).click();' % (self.pos[0], self.pos[1])
+            )
+            run.d.execute_script(
+                'document.elementFromPoint(%d, %d).focus();' % (self.pos[0], self.pos[1])
+            )
 
 
 class KeyTestStep(TestStep):
