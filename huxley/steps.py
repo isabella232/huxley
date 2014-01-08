@@ -19,6 +19,8 @@ from huxley.consts import TestRunModes
 from huxley.errors import TestError
 from huxley.images import images_identical, image_diff
 
+from selenium.webdriver.common.keys import Keys
+
 # Since we want consistent focus screenshots we steal focus
 # when taking screenshots. To avoid races we lock during this
 # process.
@@ -51,11 +53,65 @@ class ClickTestStep(TestStep):
 
 
 class KeyTestStep(TestStep):
+    KEYS_BY_JS_KEYCODE = {
+        33: Keys.PAGE_UP,
+        34: Keys.PAGE_DOWN,
+        35: Keys.END,
+        36: Keys.HOME,
+        37: Keys.LEFT,
+        38: Keys.UP,
+        39: Keys.RIGHT,
+        40: Keys.DOWN,
+        46: Keys.DELETE,
+        186: ";",
+        187: "=",
+        188: ",",
+        190: ".",
+        191: "/",
+        192: "`",
+        219: "[",
+        220: "\\",
+        221: "]",
+        222: "'",
+    }
+    KEYS_BY_JS_KEYCODE_SHIFT = dict(KEYS_BY_JS_KEYCODE.items() + {
+        48: ")",
+        49: "!",
+        50: "@",
+        51: "#",
+        52: "$",
+        53: "%",
+        54: "^",
+        55: "&",
+        56: "*",
+        57: "(",
+        186: ":",
+        187: "+",
+        188: "<",
+        190: ">",
+        191: "?",
+        192: "~",
+        219: "{",
+        220: "|",
+        221: "}",
+        222: "\"",
+    }.items())
     KEY_ID = '_huxleyKey'
 
-    def __init__(self, offset_time, key):
+    # param is [keyCode, shiftKey]
+    def __init__(self, offset_time, param):
         super(KeyTestStep, self).__init__(offset_time)
-        self.key = key
+        # backwards compat. for old records where a string was saved
+        if isinstance(param, basestring):
+            self.key = param
+        else:
+            codes = self.KEYS_BY_JS_KEYCODE_SHIFT if param[1] else self.KEYS_BY_JS_KEYCODE
+
+            char = chr(param[0])
+            if not param[1]:
+                char = char.lower()
+
+            self.key = codes.get(param[0], char)
 
     def execute(self, run):
         print '  Typing', self.key
@@ -65,7 +121,7 @@ class KeyTestStep(TestStep):
                 'document.activeElement.id = %r;' % self.KEY_ID
             )
             id = self.KEY_ID
-        run.d.find_element_by_id(id).send_keys(self.key.lower())
+        run.d.find_element_by_id(id).send_keys(self.key)
 
 
 class ScreenshotTestStep(TestStep):

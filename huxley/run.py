@@ -111,7 +111,7 @@ class TestRun(object):
 (function() {
 var events = [];
 window.addEventListener('click', function (e) { events.push([+new Date(), 'click', [e.clientX, e.clientY]]); }, true);
-window.addEventListener('keyup', function (e) { events.push([+new Date(), 'keyup', String.fromCharCode(e.keyCode)]); }, true);
+window.addEventListener('keydown', function (e) { events.push([+new Date(), 'keydown', [e.keyCode, e.shiftKey]]); }, true);
 window._getHuxleyEvents = function() { return events; };
 })();
 ''')
@@ -135,7 +135,7 @@ window._getHuxleyEvents = function() { return events; };
         for (timestamp, type, params) in events:
             if type == 'click':
                 steps.append(ClickTestStep(timestamp - start_time, params))
-            elif type == 'keyup':
+            elif type == 'keyup' or type == 'keydown':
                 steps.append(KeyTestStep(timestamp - start_time, params))
 
         steps.sort(key=operator.attrgetter('offset_time'))
