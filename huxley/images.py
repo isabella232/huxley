@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import math
+import os
 
 from PIL import Image
 from PIL import ImageChops
@@ -30,14 +31,25 @@ def rmsdiff_2011(im1, im2):
 
 
 def images_identical(path1, path2):
+    if not os.path.exists(path1):
+        return False
     im1 = Image.open(path1)
     im2 = Image.open(path2)
+    if im1.size != im2.size:
+        return False
     return ImageChops.difference(im1, im2).getbbox() is None
 
 
 def image_diff(path1, path2, outpath, diffcolor):
+    if not os.path.exists(path1):
+        im2 = Image.open(path2)
+        return (1000, im2.size[0], im2.size[1])
+
     im1 = Image.open(path1)
     im2 = Image.open(path2)
+
+    if im1.size != im2.size:
+        return (1000, im2.size[0], im2.size[1])
 
     rmsdiff = rmsdiff_2011(im1, im2)
 
