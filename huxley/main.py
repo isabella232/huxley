@@ -72,7 +72,8 @@ def main(
         diffcolor='0,255,0',
         screensize='1024x768',
         autorerecord=False,
-        save_diff=False):
+        save_diff=False,
+        mask=None):
 
     local_browser = browser if browser != 'phantomjs' else 'chrome'
 
@@ -111,7 +112,7 @@ def main(
                 with open(jsonfile, 'w') as f:
                     f.write(
                         jsonpickle.encode(
-                            TestRun.record(local_d, d, (url, postdata), screensize, filename, diffcolor, sleepfactor, save_diff)
+                            TestRun.record(local_d, d, (url, postdata), screensize, filename, diffcolor, sleepfactor, save_diff, mask)
                         )
                     )
             print 'Test recorded successfully'

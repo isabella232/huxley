@@ -51,10 +51,11 @@ def navigate(d, url):
 
 
 class Test(object):
-    def __init__(self, screen_size):
+    mask = None
+    def __init__(self, screen_size, mask=None):
         self.steps = []
         self.screen_size = screen_size
-
+        self.mask = mask
 
 class TestRun(object):
     def __init__(self, test, path, url, d, mode, diffcolor, save_diff):
@@ -110,13 +111,13 @@ class TestRun(object):
         self.d.set_window_size(width + (width - dims[0]), height + (height - dims[1]))
 
     @classmethod
-    def record(cls, d, remote_d, url, screen_size, path, diffcolor, sleepfactor, save_diff):
+    def record(cls, d, remote_d, url, screen_size, path, diffcolor, sleepfactor, save_diff, mask):
         print 'Begin record'
         try:
             os.makedirs(path)
         except:
             pass
-        test = Test(screen_size)
+        test = Test(screen_size, mask)
         run = TestRun(test, path, url, d, TestRunModes.RECORD, diffcolor, save_diff)
         run.set_window_size(*screen_size)
         navigate(d, url)

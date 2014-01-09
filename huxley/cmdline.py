@@ -57,6 +57,10 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
         'screensize',
         '1024x768'
     )
+    mask = test_config.get(
+        'mask'
+    )
+
     if record:
         r = huxleymain(
             testname,
@@ -68,7 +72,8 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             record=True,
             save_diff=save_diff,
             screensize=screensize,
-            browser=browser
+            browser=browser,
+            mask=mask
         )
     else:
         r = huxleymain(
@@ -81,7 +86,8 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             autorerecord=not playback_only,
             save_diff=save_diff,
             screensize=screensize,
-            browser=browser
+            browser=browser,
+            mask=mask
         )
     print
     if r != 0:

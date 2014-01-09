@@ -151,10 +151,10 @@ class ScreenshotTestStep(TestStep):
             else:
                 run.d.save_screenshot(new)
                 try:
-                    if not images_identical(original, new):
+                    if not images_identical(original, new, run.test.mask):
                         if run.save_diff:
                             diffpath = os.path.join(run.path, 'diff.png')
-                            diff = image_diff(original, new, diffpath, run.diffcolor)
+                            diff = image_diff(original, new, diffpath, run.diffcolor, run.test.mask)
                             raise TestError(
                                 ('Screenshot %s was different; compare %s with %s. See %s ' +
                                  'for the comparison. diff=%r') % (
