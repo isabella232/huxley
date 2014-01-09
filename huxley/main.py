@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import contextlib
 import os
 import json
 import sys
@@ -102,19 +101,21 @@ def main(
     diffcolor = tuple(int(x) for x in diffcolor.split(','))
     jsonfile = os.path.join(filename, 'record.json')
 
-    with contextlib.closing(d):
+    try:
         if record:
             if local:
                 local_d = webdriver.Remote(local, CAPABILITIES[local_browser])
             else:
                 local_d = d
-            with contextlib.closing(local_d):
+            try:
                 with open(jsonfile, 'w') as f:
                     f.write(
                         jsonpickle.encode(
                             TestRun.record(local_d, d, (url, postdata), screensize, filename, diffcolor, sleepfactor, save_diff, mask)
                         )
                     )
+            finally:
+                local_d.quit()
             print 'Test recorded successfully'
             return 0
         elif rerecord:
@@ -140,6 +141,8 @@ def main(
                 TestRun.playback(jsonpickle.decode(f.read()), filename, (url, postdata), d, sleepfactor, diffcolor, save_diff)
                 print 'Test played back successfully'
                 return 0
+    finally:
+        d.quit()
 
 if __name__ == '__main__':
     sys.exit(plac.call(main))
