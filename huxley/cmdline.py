@@ -160,6 +160,9 @@ def _main(
     new_screenshots = threadpool.Flag()
     pool = threadpool.ThreadPool()
 
+    if names != None:
+        names = [name.strip() for name in names.split(',')]
+
     for file in testfiles:
         msg = 'Running Huxley file: ' + file
         print '-' * len(msg)
