@@ -29,6 +29,7 @@ DRIVERS = {
     'ie': webdriver.Ie,
     'opera': webdriver.Opera,
     'opera': webdriver.PhantomJS,
+    'iphone': webdriver.PhantomJS,
 }
 
 CAPABILITIES = {
@@ -37,6 +38,13 @@ CAPABILITIES = {
     'ie': webdriver.DesiredCapabilities.INTERNETEXPLORER,
     'opera': webdriver.DesiredCapabilities.OPERA,
     'phantomjs': webdriver.DesiredCapabilities.PHANTOMJS,
+    'iphone': {
+        "browserName": "iPhone",
+        "version": "",
+        "platform": "MAC",
+        "javascriptEnabled": True,
+        "language": "en",
+    },
 }
 
 
@@ -74,7 +82,7 @@ def main(
         save_diff=False,
         mask=None):
 
-    local_browser = browser if browser != 'phantomjs' else 'chrome'
+    local_browser = browser if (browser != 'phantomjs' and browser != 'iphone') else 'chrome'
 
     if postdata:
         if postdata == '-':

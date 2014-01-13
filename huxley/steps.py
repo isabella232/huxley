@@ -44,10 +44,14 @@ class ClickTestStep(TestStep):
 
     def execute(self, run):
         print '  Clicking', self.pos
+
         if run.d.name == 'phantomjs':
             # PhantomJS 1.x does not support 'click()' so use Selenium
             body = run.d.find_element_by_tag_name('body')
             ActionChains(run.d).move_to_element_with_offset(body, self.pos[0], self.pos[1]).click().perform()
+        elif run.d.name == 'Safari':
+            el = run.d.execute_script('return document.elementFromPoint(%d, %d);' % (self.pos[0], self.pos[1]))
+            el.click()
         else:
             # Work around multiple bugs in WebDriver's implementation of click()
             run.d.execute_script(
@@ -146,6 +150,11 @@ class ScreenshotTestStep(TestStep):
         with SCREENSHOT_LOCK:
             # Steal focus for a consistent screenshot
             run.d.switch_to_window(run.d.window_handles[0])
+
+            # iOS insertion points are visible in screenshots
+            if run.d.name == 'Safari':
+                active = run.d.execute_script('a = document.activeElement; a.blur(); return a;')
+
             if run.mode == TestRunModes.RERECORD:
                 run.d.save_screenshot(original)
             else:
@@ -166,3 +175,4 @@ class ScreenshotTestStep(TestStep):
                 finally:
                     if not run.save_diff:
                         os.unlink(new)
+

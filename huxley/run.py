@@ -42,8 +42,9 @@ def get_post_js(url, postdata):
 
 def navigate(d, url):
     href, postdata = url
-    d.get('about:blank')
-    d.refresh()
+    if d.name != 'Safari':
+        d.get('about:blank')
+        d.refresh()
     if not postdata:
         d.get(href)
     else:
