@@ -36,6 +36,7 @@ DEFAULTS = json.loads(os.environ.get('HUXLEY_DEFAULTS', 'null'))
 
 def run_test(record, playback_only, save_diff, new_screenshots, file, config, testname, browser):
     print '[' + testname + '] Running test:', testname
+    print LOCAL_WEBDRIVER_URL + " " + REMOTE_WEBDRIVER_URL
     test_config = dict(config.items(testname))
     url = config.get(testname, 'url')
     default_filename = os.path.join(

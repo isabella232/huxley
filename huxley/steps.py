@@ -51,7 +51,10 @@ class ClickTestStep(TestStep):
             ActionChains(run.d).move_to_element_with_offset(body, self.pos[0], self.pos[1]).click().perform()
         elif run.d.name == 'Safari':
             el = run.d.execute_script('return document.elementFromPoint(%d, %d);' % (self.pos[0], self.pos[1]))
-            el.click()
+            if el:
+                el.click()
+            else:
+                print '   warning, no element found at (%d, %d);' % (self.pos[0], self.pos[1])
         else:
             # Work around multiple bugs in WebDriver's implementation of click()
             run.d.execute_script(
@@ -124,14 +127,21 @@ class KeyTestStep(TestStep):
             self.key = codes.get(param[0], char)
 
     def execute(self, run):
-        print '  Typing', self.key
-        id = run.d.execute_script('return document.activeElement.id;')
-        if id is None or id == '':
-            run.d.execute_script(
-                'document.activeElement.id = %r;' % self.KEY_ID
-            )
-            id = self.KEY_ID
-        run.d.find_element_by_id(id).send_keys(self.key)
+        if self.key == Keys.HOME:
+            print '  Scrolling to top'
+            run.d.execute_script('window.scrollTo(0, 0)')
+        elif self.key == Keys.END:
+            print '  Scrolling to bottom'
+            run.d.execute_script('window.scrollTo(0, document.body.clientHeight)')
+        else:
+            print '  Typing', self.key
+            id = run.d.execute_script('return document.activeElement.id;')
+            if id is None or id == '':
+                run.d.execute_script(
+                    'document.activeElement.id = %r;' % self.KEY_ID
+                )
+                id = self.KEY_ID
+            run.d.find_element_by_id(id).send_keys(self.key)
 
 
 class ScreenshotTestStep(TestStep):
