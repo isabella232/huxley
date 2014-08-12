@@ -10,9 +10,9 @@ setup(
     version = __version__,
     packages = find_packages(),
     install_requires = [
-        'selenium==2.35.0',
+        'selenium>=2.35.0',
         'plac==0.9.1',
-        'Pillow==2.2.1',
+        'Pillow>=2.2',
         'jsonpickle==0.4.0'
     ],
     package_data={'': ['requirements.txt']},

@@ -30,7 +30,7 @@ By default, Huxley will overwrite the old screenshots with new ones. That means 
 
 ## Installation
 
-`pip install huxley`
+`python setup.py install`
 
 ## Tutorial
 
