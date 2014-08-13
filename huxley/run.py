@@ -42,8 +42,9 @@ def get_post_js(url, postdata):
 
 def navigate(d, url):
     href, postdata = url
-    d.get('about:blank')
-    d.refresh()
+    if d.name != 'Safari':
+        d.get('about:blank')
+        d.refresh()
     if not postdata:
         d.get(href)
     else:
@@ -51,10 +52,11 @@ def navigate(d, url):
 
 
 class Test(object):
-    def __init__(self, screen_size):
+    mask = None
+    def __init__(self, screen_size, mask=None):
         self.steps = []
         self.screen_size = screen_size
-
+        self.mask = mask
 
 class TestRun(object):
     def __init__(self, test, path, url, d, mode, diffcolor, save_diff):
@@ -85,7 +87,16 @@ class TestRun(object):
         run._playback(sleepfactor)
 
     def _playback(self, sleepfactor):
-        self.d.set_window_size(*self.test.screen_size)
+        self.set_window_size(*self.test.screen_size)
+
+        if self.d.name == 'chrome':
+            # Chrome focuses on its location field when you navigate after a screenshot, so to be
+            # consistent across runs we force a screenshot up front before anything gets underway.
+            # Otherwise focus / selection rendering will differ across runs.
+            self.d.get('about:version')
+            self.d.save_screenshot('tmp-chrome-screenshot.png')
+            os.unlink('tmp-chrome-screenshot.png')
+
         navigate(self.d, self.url)
         last_offset_time = 0
         for step in self.test.steps:
@@ -95,24 +106,29 @@ class TestRun(object):
             step.execute(self)
             last_offset_time = step.offset_time
 
+    def set_window_size(self, width, height):
+        self.d.set_window_size(width, height)
+        dims = self.d.execute_script('return [window.innerWidth, window.innerHeight];')
+        self.d.set_window_size(width + (width - dims[0]), height + (height - dims[1]))
+
     @classmethod
-    def record(cls, d, remote_d, url, screen_size, path, diffcolor, sleepfactor, save_diff):
+    def record(cls, d, remote_d, url, screen_size, path, diffcolor, sleepfactor, save_diff, mask):
         print 'Begin record'
         try:
             os.makedirs(path)
         except:
             pass
-        test = Test(screen_size)
+        test = Test(screen_size, mask)
         run = TestRun(test, path, url, d, TestRunModes.RECORD, diffcolor, save_diff)
-        d.set_window_size(*screen_size)
+        run.set_window_size(*screen_size)
         navigate(d, url)
         start_time = d.execute_script('return +new Date();')
         d.execute_script('''
 (function() {
 var events = [];
 window.addEventListener('click', function (e) { events.push([+new Date(), 'click', [e.clientX, e.clientY]]); }, true);
-window.addEventListener('keyup', function (e) { events.push([+new Date(), 'keyup', String.fromCharCode(e.keyCode)]); }, true);
 window.addEventListener('scroll', function (e) { events.push([+new Date(), 'scroll', [window.scrollX, window.scrollY]]); }, true);
+window.addEventListener('keydown', function (e) { events.push([+new Date(), 'keydown', [e.keyCode, e.shiftKey]]); }, true);
 window._getHuxleyEvents = function() { return events; };
 })();
 ''')
@@ -136,7 +152,7 @@ window._getHuxleyEvents = function() { return events; };
         for (timestamp, type, params) in events:
             if type == 'click':
                 steps.append(ClickTestStep(timestamp - start_time, params))
-            elif type == 'keyup':
+            elif type == 'keyup' or type == 'keydown':
                 steps.append(KeyTestStep(timestamp - start_time, params))
             elif type == 'scroll':
                 steps.append(ScrollTestStep(timestamp - start_time, params))

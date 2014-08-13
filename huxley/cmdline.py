@@ -34,8 +34,9 @@ LOCAL_WEBDRIVER_URL = os.environ.get('HUXLEY_WEBDRIVER_LOCAL', 'http://localhost
 REMOTE_WEBDRIVER_URL = os.environ.get('HUXLEY_WEBDRIVER_REMOTE', 'http://localhost:4444/wd/hub')
 DEFAULTS = json.loads(os.environ.get('HUXLEY_DEFAULTS', 'null'))
 
-def run_test(record, playback_only, save_diff, new_screenshots, file, config, testname):
+def run_test(record, playback_only, save_diff, new_screenshots, file, config, testname, browser, remote_sess):
     print '[' + testname + '] Running test:', testname
+    print LOCAL_WEBDRIVER_URL + " " + REMOTE_WEBDRIVER_URL
     test_config = dict(config.items(testname))
     url = config.get(testname, 'url')
     default_filename = os.path.join(
@@ -57,8 +58,12 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
         'screensize',
         '1024x768'
     )
+    mask = test_config.get(
+        'mask'
+    )
+
     if record:
-        r = huxleymain(
+        r, remote_sess = huxleymain(
             testname,
             url,
             filename,
@@ -66,10 +71,14 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             local=LOCAL_WEBDRIVER_URL,
             remote=REMOTE_WEBDRIVER_URL,
             record=True,
-            screensize=screensize
+            save_diff=save_diff,
+            screensize=screensize,
+            browser=browser,
+            mask=mask,
+            remote_sess=remote_sess
         )
     else:
-        r = huxleymain(
+        r, remote_sess = huxleymain(
             testname,
             url,
             filename,
@@ -78,11 +87,15 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
             sleepfactor=sleepfactor,
             autorerecord=not playback_only,
             save_diff=save_diff,
-            screensize=screensize
+            screensize=screensize,
+            browser=browser,
+            mask=mask,
+            remote_sess=remote_sess
         )
     print
     if r != 0:
         new_screenshots.set_value(True)
+    return remote_sess
 
 @plac.annotations(
     names=plac.Annotation(
@@ -121,6 +134,12 @@ def run_test(record, playback_only, save_diff, new_screenshots, file, config, te
         'Get the current version',
         'flag',
         'v'
+    ),
+    browser=plac.Annotation(
+        'Specify a browser (firefox, chrome, ie, opera)',
+        'option',
+        'b',
+        str
     )
 )
 def _main(
@@ -130,7 +149,8 @@ def _main(
     playback_only=False,
     concurrency=1,
     save_diff=False,
-    version=False
+    version=False,
+    browser='firefox'
 ):
     if version:
         print 'Huxley ' + __version__
@@ -144,23 +164,31 @@ def _main(
     new_screenshots = threadpool.Flag()
     pool = threadpool.ThreadPool()
 
-    for file in testfiles:
-        msg = 'Running Huxley file: ' + file
-        print '-' * len(msg)
-        print msg
-        print '-' * len(msg)
+    if names != None:
+        names = [name.strip() for name in names.split(',')]
 
-        config = ConfigParser.SafeConfigParser(
-            defaults=DEFAULTS,
-            allow_no_value=True
-        )
-        config.read([file])
-        for testname in config.sections():
-            if names and (testname not in names):
-                continue
-            pool.enqueue(run_test, record, playback_only, save_diff, new_screenshots, file, config, testname)
+    sess = None
 
-    pool.work(concurrency)
+    try:
+        for file in testfiles:
+            msg = 'Running Huxley file: ' + file
+            print '-' * len(msg)
+            print msg
+            print '-' * len(msg)
+
+            config = ConfigParser.SafeConfigParser(
+                defaults=DEFAULTS,
+                allow_no_value=True
+            )
+            config.read([file])
+            for testname in config.sections():
+                if names and (testname not in names):
+                    continue
+                sess = run_test(record, playback_only, save_diff, new_screenshots, file, config, testname, browser, sess)
+    finally:
+        if sess:
+            sess.quit()
+
     if new_screenshots.value:
         print '** New screenshots were written; please verify that they are correct. **'
         return ExitCodes.NEW_SCREENSHOTS
