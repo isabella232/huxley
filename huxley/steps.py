@@ -50,6 +50,19 @@ class ClickTestStep(TestStep):
         )
 
 
+class ScrollTestStep(TestStep):
+    SCROLL_OFFSET_ID = '_huxleyScroll'
+
+    def __init__(self, offset_time, pos):
+        super(ScrollTestStep, self).__init__(offset_time)
+        self.pos = pos
+
+    def execute(self, run):
+        print '  Scrolling', self.pos
+        run.d.execute_script(
+            'window.scrollTo(%d, %d);' % (self.pos[0], self.pos[1])
+        )
+
 class KeyTestStep(TestStep):
     KEY_ID = '_huxleyKey'
 

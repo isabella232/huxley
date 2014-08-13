@@ -19,7 +19,7 @@ import time
 
 from huxley.consts import TestRunModes
 from huxley.errors import TestError
-from huxley.steps import ScreenshotTestStep, ClickTestStep, KeyTestStep
+from huxley.steps import ScreenshotTestStep, ClickTestStep, KeyTestStep, ScrollTestStep
 
 def get_post_js(url, postdata):
     markup = '<form method="post" action="%s">' % url
@@ -112,6 +112,7 @@ class TestRun(object):
 var events = [];
 window.addEventListener('click', function (e) { events.push([+new Date(), 'click', [e.clientX, e.clientY]]); }, true);
 window.addEventListener('keyup', function (e) { events.push([+new Date(), 'keyup', String.fromCharCode(e.keyCode)]); }, true);
+window.addEventListener('scroll', function (e) { events.push([+new Date(), 'scroll', [window.scrollX, window.scrollY]]); }, true);
 window._getHuxleyEvents = function() { return events; };
 })();
 ''')
@@ -137,6 +138,8 @@ window._getHuxleyEvents = function() { return events; };
                 steps.append(ClickTestStep(timestamp - start_time, params))
             elif type == 'keyup':
                 steps.append(KeyTestStep(timestamp - start_time, params))
+            elif type == 'scroll':
+                steps.append(ScrollTestStep(timestamp - start_time, params))
 
         steps.sort(key=operator.attrgetter('offset_time'))
 
