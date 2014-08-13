@@ -2,90 +2,65 @@
 
 *Watches you browse, takes screenshots, tells you when they change*
 
-Huxley is a test-like system for catching **visual regressions** in Web applications. It was built by [Pete Hunt](http://github.com/petehunt/) with input from [Maykel Loomans](http://www.miekd.com/) at [Instagram](http://www.instagram.com/).
+Huxley is a test-like system for catching **visual regressions** in Web applications. It was originally built by [Pete Hunt](http://github.com/petehunt/) with input from [Maykel Loomans](http://www.miekd.com/) at [Instagram](http://www.instagram.com/).
 
-## What is the problem?
+## Installation instructions
 
-* UI tests are hard to write and are usually fragile.
-* Automated testing can't tell you if something doesn't look right, so UI regressions may go undetected.
-* It can be difficult for designers to participate in the code review process even though reviewing the way the UI looks is just as important as reviewing the code that creates it.
+* Get [Selenium Server](http://docs.seleniumhq.org/download/)
+* Install Firefox and add the binary to your PATH
+	* `export PATH=/Applications/Firefox.app/Contents/MacOS:$PATH` (or create a symbolic link that within the searchable path)
+* (optional) Install Chromedriver
+	* `brew install chromedriver`
 
-## How does Huxley help me?
+Install to command line with `python setup.py install`
 
-Huxley runs in two modes:
+## Getting started
 
-### Record mode
+### 1. Fire up your app
 
-Using Selenium WebDriver, Huxley opens a page and records your actions. When you press enter in the Huxley terminal, Huxley will save a screenshot.
+On Lyft, use vagrant. Otherwise, start up a python simpleserver `python -m SimpleHTTPServer 11080`.
 
-Testing a new flow is as simple as manually testing it once. Huxley will remember and re-run your "manual" test plan for you automatically.
-
-### Playback mode
-
-You should run Huxley in playback mode before submitting code for review and in continuous integration. Huxley will open the page and re-run your actions with WebDriver. It will take screenshots and compare them with the original screenshots. If they have changed, it will save the new screenshots and warn you that they have changed.
-
-When screenshots have changed, those screenshot changes will show up in your commit. A designer can review them to be sure they're OK. And your continuous integration system can alert you if you forgot to run Huxley.
-
-By default, Huxley will overwrite the old screenshots with new ones. That means you don't have to rewrite anything when your UI changes like you would with a traditional WebDriver test -- Huxley will just take a new screenshot for you and when it's checked in your test is updated!
-
-## Installation
-
-`python setup.py install`
-
-## Tutorial
-
-In `examples/` you'll find two simple completed Huxley tests. To start from scratch, simply remove `toggle.huxley`, `type.huxley` and `Huxleyfile`.
-
-### Motivation
-
-In `examples/webroot/toggle.html` you'll find a very simple JavaScript application that implements a toggle button. The goal of Huxley is to make creating an integration for this component effortless, and to make it easy to update the test when the UI changes.
-
-### Step 1: host your app somewhere
-
-For our example, simply `cd` to `examples/webroot` and run `python -m SimpleHTTPServer` to start a basic server for our demo. In your app you may need to start up whatever framework you're using.
-
-### Step 2: create a Huxleyfile
+### 2. Create a Huxleyfile
 
 A Huxleyfile describes your test. Create one that looks like this:
 
 ```
-[toggle]
-url=http://localhost:8000/toggle.html
+[homepage]
+url=http://localhost:11080/
 ```
 
-This creates a test named `toggle` that tests the URL `http://localhost:8000/toggle.html`.
+This creates a test named `homepage` that tests the URL `http://localhost:11080/`.
 
-### Step 2: record the test
+### 3. Start your local Selenium Server (skip if using remote server)
 
-Huxley makes writing tests easy because it simply records your browser session -- specifically mouse clicks and key presses on a single page -- and can replay them in an automated way. To do this you need to install [Selenium Server](http://docs.seleniumhq.org/download/) and start it. It's as easy as `java -jar selenium-server-standalone-XXX.jar`.
+`java -jar selenium-server-standalone-XXX.jar`
 
-Then, run Huxley in record mode: `huxley --record`. Huxley will bring up a browser using Selenium. Press enter in the Huxley console to take a screen shot of the initial page load. Then toggle the button in the browser a few times. After every click, switch back to the Huxley console to take a screen shot. When you've tested all of the functionality you want to test, simply type `q` and then enter in the Huxley console to exit.
+### 4. Record the test
 
-After confirming, Huxley will automatically record the test for you and save it to disk as `toggle.huxley`. Be sure to commit the `Huxleyfile` as well as `toggle.huxley` into your repository so you can track changes to them.
+`huxley --record`
 
-### Step 3: playback
+Huxley records `click`, `keyup`, and `scroll` events along with the delay between events.  There is currently no support for tracking navigation outside the angular app. Hit "enter" in the huxley terminal window when you want to take a screenshot. When you're done recording, type "q" then "enter" in the huxley terminal.
 
-Simply run the `huxley` command in the same directory as the `Huxleyfile` to be sure that your app still works.
+After confirming, Huxley will automatically record the test for you and save it to disk as `homepage.huxley`. Be sure to commit the `Huxleyfile` as well as `homepage.huxley` into your repository so you can track changes to them.
 
-### Step 4: update the test with new screen shots
+### 5. Test UI changes & Playback
 
-You'll likely update the UI of the component a lot without changing its core functionality. Huxley can take new screen shots for you when this happens. Tweak the UI of the component in `toggle.html` somehow (maybe change the button color or something) and re-run `huxley`. It will warn you that the UI has changed and will automatically write new screen shots for you. If you run `huxley` again, the test will pass since the screen shots were updated.
+Simply run the `huxley` command in the same directory as the `Huxleyfile` to be sure that your app still works. By default huxley will re-record and overwrite any changes to the screenshots so you can review and check in the new screenshot files to the repo as needed. 
 
-The best part is, since the screen shots are checked into the repository, you can review the changes to the UI as part of the code review process if you'd like. At Instagram we have frontend engineers reviewing the JavaScript and designers reviewing the screenshots to ensure that they're pixel perfect.
 
-### Step 5: run in CI mode
+## Huxleyfile options
+
+| Option | Example | Description |
+| ------ | ------- | ----------- |
+| url | `url=http://localhost:11080/` | Url to visit |
+| sleepfactor | `sleepfactor=0.5` | Multiplier to speed up / slow down execution time |
+| screensize | `screensize=320x568` | For testing responsive design, change viewport size |
+| filename | `filename=foo` | To save the directory name as something other than the TESTNAME.huxley |
+| postdata | `postdata=data.json` | File for POST data |
+
+## What about CI?
 
 If you're using a continuous integration solution like [Jenkins](http://jenkins-ci.org/) you probably don't want to automatically rerecord screen shots on failure. Simply run `huxley --playback-only` to do this.
-
-Additionally, you may find that you're dissatisfied with Huxley replaying your browsing session in real-time. You can speed it up (or slow it down) by editing your `Huxleyfile` to read:
-
-```
-[toggle]
-url=http://localhost:8000/toggle.html
-sleepfactor=0.5
-```
-
-This edit should cut the execution time in half.
 
 ## Best practices
 
@@ -108,29 +83,3 @@ It's usually best if you use an image comparison tool like [Kaleidoscope](http:/
 
 You can set the `HUXLEY_WEBDRIVER_LOCAL` environment variable to tell Huxley which webdriver URL to use for `--record` mode. You can set the `HUXLEY_WEBDRIVER_REMOTE` environment variable to tell Huxley which webdriver URL to use for screenshots and playback. Usually you only need to use this when working in a team setting such that everyone's screenshots are taken on the same machine configuration (otherwise they'll change depending on who ran them last).
 
-## Can I test responsive design?
-
-Of course! Simply add a `screensize` setting to your `Huxleyfile`. The default is `screensize=1024x768`.
-
-## Philosophical FAQ
-
-### Why would you use this instead of unit testing?
-
-First of all, if you sufficiently componentize your UI, Huxley can be used as a unit testing tool.
-
-With that said, unit tests have two shortcomings today.
-
-* **They usually take a long time to write.** Instagram on the web had a single engineer and a designer working on a ton of things in parallel, and we didn't have time to write beautifully isolated tests with elegant dependency injection and comprehensive assertions. We just had to make sure that we didn't cause bugs when we were frantically shipping code. A lot of small web teams can probably identify with this.
-* **They do not test the look of the UI.** Huxley does pixel-by-pixel comparisons of the UI. Traditional UI test systems inspect the DOM but do not look at how it actually renders. We once had a bug where a CSS rule made the height of all image components 0px; without a pixel-by-pixel comparison it's unlikely we would have ever written an explicit test for this.
-
-### What's the best way to use Huxley?
-
-Use it however you want! But we generally shell out to it from within an existing test runner (i.e. Django or Rails). This lets us programmatically start a test server for Huxley to hit.
-
-If you're using Python, you can use Huxley directly in a test (see `huxley.integration.HuxleyTestCase`) or browse the source to see its core APIs.
-
-If you're on a team I recommend setting up webdriver on a shared server and changing the `HUXLEY_WEBDRIVER_REMOTE` environment variable such that everyone's screenshots are pixel perfect (see the technical FAQ above).
-
-### Why is it called Huxley?
-
-Lots of test frameworks and methodologies are very opinionated about how your code should be structured or how you should write tests. Some tools are so opinionated that they're almost religious about their view of testing! We wanted a tool that got out of our way and let us fight regressions as quickly and easily as possible without being opinionated about it. So we named it after the guy who coined the term "agnostic", [Thomas Henry Huxley](http://en.wikipedia.org/wiki/Thomas_Henry_Huxley).
